@@ -192,3 +192,7 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# add a macOS specific ignore file
+#  This file is used to ignore macOS specific files that are not relevant to the project
+.DS_Store
