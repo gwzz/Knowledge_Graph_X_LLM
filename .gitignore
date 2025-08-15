@@ -196,3 +196,7 @@ cython_debug/
 # add a macOS specific ignore file
 #  This file is used to ignore macOS specific files that are not relevant to the project
 .DS_Store
+
+## ignore environment variables
+#  This file is used to ignore environment variables that are not relevant to the project
+.env
