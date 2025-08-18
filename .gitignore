@@ -200,3 +200,9 @@ cython_debug/
 ## ignore environment variables
 #  This file is used to ignore environment variables that are not relevant to the project
 .env
+
+## ignore log files
+#  This file is used to ignore log files that are not relevant to the project
+*.log
+*.log.*
+logs/
