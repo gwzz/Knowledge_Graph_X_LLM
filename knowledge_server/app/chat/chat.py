@@ -4,7 +4,6 @@ from configs import *
 from json_repair import repair_json
 from llama_index.core.llms import ChatMessage, MessageRole
 from llama_index.llms.openai_like import OpenAILike
-from databases import Database
 import pandas as pd
 import time
 import schedule

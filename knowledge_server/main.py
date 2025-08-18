@@ -1,8 +1,16 @@
 import uvicorn
-from fastapi import FastAPI, Request
-from app.chat import ChatQuery
+from fastapi import FastAPI, Request, Depends, HTTPException
+from app.chat.chat import ChatQuery
 from configs import *
 from utils import get_logging
+
+from sqlalchemy.orm import Session
+from app.knowledge import knowledge_crud as crud
+from app.knowledge import knowledge_schemas as schemas
+from app.knowledge import knowledge_models as models
+from databases import engine, get_db
+
+models.Base.metadata.create_all(bind=engine)  # 创建数据库表
 
 # 创建FastAPI应用
 app = FastAPI()
@@ -37,7 +45,35 @@ async def chat_no_think_endpoint(request: Request):
     return {"response": response}
 
 
+## database crud operations
+@app.post("/diagnosis_standards/", response_model=schemas.DiagnosisStandard)
+def create_diagnosis_standard(diagnosis: schemas.DiagnosisStandardCreate, db: Session = Depends(get_db)):
+    return crud.create_diagnosis_standard(db, diagnosis)
 
+@app.get("/diagnosis_standards/", response_model=list[schemas.DiagnosisStandard])
+def read_diagnosis_standards(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    return crud.get_diagnosis_standards(db, skip, limit)
+
+@app.get("/diagnosis_standards/{diagnosis_id}", response_model=schemas.DiagnosisStandard)
+def read_diagnosis_standard(diagnosis_id: int, db: Session = Depends(get_db)):
+    db_diagnosis = crud.get_diagnosis_standard(db, diagnosis_id)
+    if not db_diagnosis:
+        raise HTTPException(status_code=404, detail="Diagnosis standard not found")
+    return db_diagnosis
+
+@app.put("/diagnosis_standards/{diagnosis_id}", response_model=schemas.DiagnosisStandard)
+def update_diagnosis_standard(diagnosis_id: int, diagnosis: schemas.DiagnosisStandardBase, db: Session = Depends(get_db)):
+    db_diagnosis = crud.update_diagnosis_standard(db, diagnosis_id, diagnosis)
+    if not db_diagnosis:
+        raise HTTPException(status_code=404, detail="Diagnosis standard not found")
+    return db_diagnosis
+
+@app.delete("/diagnosis_standards/{diagnosis_id}", response_model=schemas.DiagnosisStandard)
+def delete_diagnosis_standard(diagnosis_id: int, db: Session = Depends(get_db)):
+    db_diagnosis = crud.delete_diagnosis_standard(db, diagnosis_id)
+    if not db_diagnosis:
+        raise HTTPException(status_code=404, detail="Diagnosis standard not found")
+    return db_diagnosis
 
 # 主函数入口
 if __name__ == '__main__':
