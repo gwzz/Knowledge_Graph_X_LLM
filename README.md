@@ -8,5 +8,20 @@ Knowledge_Graph_X_LLM is a toolkit for generating, managing, and visualizing kno
 - **Knowledge Graph Management**: Store, update, and query knowledge graphs efficiently.
 - **Visualization**: Interactive visualization tools for exploring and analyzing the knowledge graph.
 - **Service APIs**: Expose KG operations via RESTful APIs for integration with other applications.
+- **Knowledge Server**: Centralized server for managing, querying, and serving knowledge graph data to clients and applications.
 
 ## Project Structure
+
+```
+Knowledge_Graph_X_LLM/
+├── knowledge_graph_generator/      # KG extraction and LLM integration
+├── knowledge_server/               # Centralized server for KG management and APIs
+├── visulization/
+│   └── graph-visualization/        # Next.js-based 3D visualization web app
+├── data/                           # Example input/output data and KG files
+├── docs/                           # Documentation and usage guides
+├── LICENSE
+├── .gitignore
+├── README.md
+```
+
