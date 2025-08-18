@@ -15,14 +15,16 @@ TIME_OUT = 600
 
 ## set embedding model and api
 EMBEDDING_MODEL_NAME = "bge-embedding"
-EMBED_API_BASE = "http://192.168.100.30:12001/v1"
+EMBED_API_BASE       = "http://192.168.100.30:12001/v1"
+EMBEDDING_TOP_K      = 5
+        
 
 ## set rerank model and api
 RERANK_MODEL_NAME = "bge-reranker"
-RERANK_API_BASE = "http://192.168.100.30:12002/v1"
+RERANK_API_BASE   = "http://192.168.100.30:12002/v1"
+RERANK_TOP_K      = 3  
 
 FAISS_SCORE = 0.75
-TOP_K = 1
 
 ##### database config #####
 ### neo4j config ###
