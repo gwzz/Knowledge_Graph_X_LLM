@@ -9,6 +9,7 @@ from app.knowledge import knowledge_crud as crud
 from app.knowledge import knowledge_schemas as schemas
 from app.knowledge import knowledge_models as models
 from databases import engine, get_db
+from app.knowledge.knowledge import ContentQuery
 
 models.Base.metadata.create_all(bind=engine)  # 创建数据库表
 
@@ -16,6 +17,7 @@ models.Base.metadata.create_all(bind=engine)  # 创建数据库表
 app = FastAPI()
 chat = ChatQuery()
 logger = get_logging(__file__)
+content = ContentQuery()
 
 
 @app.get("/")
@@ -46,29 +48,29 @@ async def chat_no_think_endpoint(request: Request):
 
 
 ## database crud operations
-@app.post("/diagnosis_standards/", response_model=schemas.DiagnosisStandard)
+@app.post("/knowledge/diagnosis_standards/", response_model=schemas.DiagnosisStandard)
 def create_diagnosis_standard(diagnosis: schemas.DiagnosisStandardCreate, db: Session = Depends(get_db)):
     return crud.create_diagnosis_standard(db, diagnosis)
 
-@app.get("/diagnosis_standards/", response_model=list[schemas.DiagnosisStandard])
+@app.get("/knowledge/diagnosis_standards/", response_model=list[schemas.DiagnosisStandard])
 def read_diagnosis_standards(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return crud.get_diagnosis_standards(db, skip, limit)
 
-@app.get("/diagnosis_standards/{diagnosis_id}", response_model=schemas.DiagnosisStandard)
+@app.get("/knowledge/diagnosis_standards/{diagnosis_id}", response_model=schemas.DiagnosisStandard)
 def read_diagnosis_standard(diagnosis_id: int, db: Session = Depends(get_db)):
     db_diagnosis = crud.get_diagnosis_standard(db, diagnosis_id)
     if not db_diagnosis:
         raise HTTPException(status_code=404, detail="Diagnosis standard not found")
     return db_diagnosis
 
-@app.put("/diagnosis_standards/{diagnosis_id}", response_model=schemas.DiagnosisStandard)
+@app.put("/knowledge/diagnosis_standards/{diagnosis_id}", response_model=schemas.DiagnosisStandard)
 def update_diagnosis_standard(diagnosis_id: int, diagnosis: schemas.DiagnosisStandardBase, db: Session = Depends(get_db)):
     db_diagnosis = crud.update_diagnosis_standard(db, diagnosis_id, diagnosis)
     if not db_diagnosis:
         raise HTTPException(status_code=404, detail="Diagnosis standard not found")
     return db_diagnosis
 
-@app.delete("/diagnosis_standards/{diagnosis_id}", response_model=schemas.DiagnosisStandard)
+@app.delete("/knowledge/diagnosis_standards/{diagnosis_id}", response_model=schemas.DiagnosisStandard)
 def delete_diagnosis_standard(diagnosis_id: int, db: Session = Depends(get_db)):
     db_diagnosis = crud.delete_diagnosis_standard(db, diagnosis_id)
     if not db_diagnosis:

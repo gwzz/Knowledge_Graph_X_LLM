@@ -24,6 +24,7 @@ RERANK_MODEL_NAME = "bge-reranker"
 RERANK_API_BASE   = "http://192.168.100.30:12002/v1"
 RERANK_TOP_K      = 3  
 
+
 FAISS_SCORE = 0.75
 
 ##### database config #####
@@ -37,6 +38,12 @@ MYSQL_HOST = os.getenv('MYSQL_HOST')
 MYSQL_USER_NAME = os.getenv('MYSQL_USER_NAME')
 MYSQL_PASSWD = os.getenv('MYSQL_PASSWD')
 MYSQL_DATABASE = os.getenv('MYSQL_DATABASE')
+
+### postgres config ###
+POSTGRES_HOST= os.getenv('LOCAL_POSTGRES_HOST')
+POSTGRES_USER_NAME = os.getenv('LOCAL_POSTGRES_USER_NAME')
+POSTGRES_PASSWD = os.getenv('LOCAL_POSTGRES_PASSWD')
+POSTGRES_DATABASE = os.getenv('LOCAL_POSTGRES_DATABASE')
 
 ### log config ###
 LOG_FILE_PATH = "log/log.log"

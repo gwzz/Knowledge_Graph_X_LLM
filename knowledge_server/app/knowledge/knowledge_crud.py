@@ -8,6 +8,9 @@ def get_diagnosis_standard(db: Session, diagnosis_id: int):
 def get_diagnosis_standards(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.DiagnosisStandard).offset(skip).limit(limit).all()
 
+def get_diagnosis_standards_for_vector(db: Session):
+    return db.query(models.DiagnosisStandard.name, models.DiagnosisStandard.describes).filter(models.DiagnosisStandard.seek_medical_attention_immediately == 1).all()
+
 def create_diagnosis_standard(db: Session, diagnosis: schemas.DiagnosisStandardCreate):
     db_diagnosis = models.DiagnosisStandard(**diagnosis.dict())
     db.add(db_diagnosis)
