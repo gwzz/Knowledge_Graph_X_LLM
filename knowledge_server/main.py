@@ -49,33 +49,57 @@ async def chat_no_think_endpoint(request: Request):
 
 ## database crud operations
 @app.post("/knowledge/diagnosis_standards/", response_model=schemas.DiagnosisStandard)
-def create_diagnosis_standard(diagnosis: schemas.DiagnosisStandardCreate, db: Session = Depends(get_db)):
+async def create_diagnosis_standard(diagnosis: schemas.DiagnosisStandardCreate, db: Session = Depends(get_db)):
     return crud.create_diagnosis_standard(db, diagnosis)
 
 @app.get("/knowledge/diagnosis_standards/", response_model=list[schemas.DiagnosisStandard])
-def read_diagnosis_standards(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+async def read_diagnosis_standards(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return crud.get_diagnosis_standards(db, skip, limit)
 
 @app.get("/knowledge/diagnosis_standards/{diagnosis_id}", response_model=schemas.DiagnosisStandard)
-def read_diagnosis_standard(diagnosis_id: int, db: Session = Depends(get_db)):
+async def read_diagnosis_standard(diagnosis_id: int, db: Session = Depends(get_db)):
     db_diagnosis = crud.get_diagnosis_standard(db, diagnosis_id)
     if not db_diagnosis:
         raise HTTPException(status_code=404, detail="Diagnosis standard not found")
     return db_diagnosis
 
 @app.put("/knowledge/diagnosis_standards/{diagnosis_id}", response_model=schemas.DiagnosisStandard)
-def update_diagnosis_standard(diagnosis_id: int, diagnosis: schemas.DiagnosisStandardBase, db: Session = Depends(get_db)):
+async def update_diagnosis_standard(diagnosis_id: int, diagnosis: schemas.DiagnosisStandardBase, db: Session = Depends(get_db)):
     db_diagnosis = crud.update_diagnosis_standard(db, diagnosis_id, diagnosis)
     if not db_diagnosis:
         raise HTTPException(status_code=404, detail="Diagnosis standard not found")
     return db_diagnosis
 
 @app.delete("/knowledge/diagnosis_standards/{diagnosis_id}", response_model=schemas.DiagnosisStandard)
-def delete_diagnosis_standard(diagnosis_id: int, db: Session = Depends(get_db)):
+async def delete_diagnosis_standard(diagnosis_id: int, db: Session = Depends(get_db)):
     db_diagnosis = crud.delete_diagnosis_standard(db, diagnosis_id)
     if not db_diagnosis:
         raise HTTPException(status_code=404, detail="Diagnosis standard not found")
     return db_diagnosis
+
+@app.post("/knowledge/embed_search")
+async def embed_search_endpoint(request: Request):
+    data = await request.json()
+    logger.info(f"入参: {data}")
+    query = data.get("query", "")
+    top_k = data.get("top_k", 5)
+    if not query:
+        return {"error": "No query provided"}
+    
+    response = content.embed_search(query, top_k=top_k)
+    return {"response": response}
+
+@app.post("/knowledge/qdrant_embed_search")
+async def embed_search_endpoint(request: Request):
+    data = await request.json()
+    logger.info(f"入参: {data}")
+    query = data.get("query", "")
+    top_k = data.get("top_k", 5)
+    if not query:
+        return {"error": "No query provided"}
+    
+    response = content.qdrant_embed_search(query, top_k=top_k)
+    return {"response": response}
 
 # 主函数入口
 if __name__ == '__main__':

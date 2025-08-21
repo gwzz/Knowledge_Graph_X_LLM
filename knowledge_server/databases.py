@@ -14,7 +14,6 @@ local_db_name = os.getenv("LOCAL_MYSQL_DATABASE")
 # MySQL 连接格式: mysql+pymysql://<username>:<password>@<host>:<port>/<database_name>
 SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{local_db_username}:{local_db_password}@{local_db_host}:3306/{local_db_name}"
 
-# 需要安装 pymysql: pip install pymysql
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     pool_pre_ping=True,  # 自动检测连接是否有效

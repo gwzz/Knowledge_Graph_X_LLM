@@ -206,3 +206,7 @@ cython_debug/
 *.log
 *.log.*
 logs/
+
+## igoner qdrant files
+#  This file is used to ignore qdrant files that are not relevant to the project
+qdrant_storage
