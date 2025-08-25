@@ -11,6 +11,7 @@ from databases import engine, get_db
 from app.knowledge.knowledge import ContentQuery
 from app.medical.diagnosis_standards import MedicalQuery
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 
 models.Base.metadata.create_all(bind=engine)  # 创建数据库表
 
@@ -21,6 +22,13 @@ logger = get_logging(__file__)
 content = ContentQuery()
 medicalrag = MedicalQuery()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 @app.get("/")
 async def read_root():
     return {"Hello": "World"}
@@ -123,7 +131,6 @@ async def reranker_search_endpoint(request: Request):
     
     response = content.reranker_result(query, documents, top_k=top_k)
     return {"response": response}
-
 
 class medical_rag_request_json(BaseModel):
     query:str
