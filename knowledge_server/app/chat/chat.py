@@ -4,12 +4,9 @@ from configs import *
 from json_repair import repair_json
 from llama_index.core.llms import ChatMessage, MessageRole
 from llama_index.llms.openai_like import OpenAILike
-import pandas as pd
-import time
-import schedule
-from threading import Thread
-
-
+import mlflow
+from mlflow.genai.scorers import Correctness, Guidelines
+from mlflow.genai import scorer
 
 
 @staticmethod
@@ -40,8 +37,6 @@ class ChatQuery:
         self.llm = OpenAILike(
             model=MODEL_NAME,
             api_base=LLM_API_BASE,
-            # messages_to_prompt=messages_to_prompt,
-            # completion_to_prompt=completion_to_prompt,
             api_key='EMPTY',
             is_chat_model=True,
             temperature=T,
@@ -52,8 +47,6 @@ class ChatQuery:
         self.llm_2 = OpenAILike(
             model=MODEL_NAME,
             api_base=LLM_API_BASE,
-            # messages_to_prompt=messages_to_prompt,
-            # completion_to_prompt=completion_to_prompt,
             api_key='EMPTY',
             is_chat_model=True,
             temperature=0.6,
@@ -61,16 +54,19 @@ class ChatQuery:
             timeout=TIME_OUT,
             additional_kwargs={"extra_body": {"chat_template_kwargs": {"enable_thinking": False}}},
         )
-
+        mlflow.set_tracking_uri("http://127.0.0.1:5000")
+    
+    # @mlflow.trace
     def chat_query(self, user_message, **kwargs):
+        mlflow.set_experiment(experiment_id="0")
+        mlflow.llama_index.autolog()
         user_prompt = user_message
         messages = [
             ChatMessage(role="assistant", content="你是一个乐于助人的朋友"),
             ChatMessage(role="user", content=user_prompt)
         ]
         response = self.llm.chat(messages, **kwargs)
-        result_str = response.message.content
-        print(result_str)
+        # result_str = response.message.content
         # if isinstance(response, str):
         #     response = repair_json(response)
         return response
@@ -88,27 +84,54 @@ class ChatQuery:
         #     response = repair_json(response)
         return response
 
-        
+### below is for mlflow test
+    def predict_fn(self, question: str, **kwargs) -> str:
+        user_prompt = question
+        print(f"user_prompt: {user_prompt}")
+        messages = [
+            ChatMessage(role="assistant", content="你是一个乐于回答问题的全科医生。你只回答“是” 或 “否”。"),
+            ChatMessage(role="user", content=user_prompt)
+        ]
+        response = self.llm_2.chat(messages, **kwargs)
+        print(f"response: {response.message.blocks[0].text}")
+        return response.message.blocks[0].text
 
+    @scorer
+    def exact_match(outputs: dict, expectations: dict) -> bool:
+        return outputs == expectations["expected_response"]
 
-
-        # self.database = Database()
-        # ddff = pd.read_excel('科室数据.xlsx').values.tolist()
-        # self.d_nn = {}
-        # for i in ddff:
-        #     self.d_nn[i[2]] = {"department_top": i[0], "department_id": i[1]}
-
-        # # df = pd.read_excel('faiss_server/dianogsis_with_describes.xlsx')
-        # self.start_scheduler()
-        # self.data_dict = {}
-        # table_data = self.database.query_diagnosis_data()
-        # print(table_data)
-        # self.table = []
-        # for i in table_data:
-        #     self.data_dict[i['id']] = {"describe": i.get("describes"), "disease": i.get("name")}
-        #     self.table.append(f"{str(i['id'])}、{i.get('describes')}")
-
-    
+    def mlflow_test(self, **kwargs):
+        dataset = [
+            {
+                "inputs": {"question": "我的空腹血糖10mmol，是有糖尿病风险吗？"},
+                "expectations": {"expected_response": "是。"},
+            },
+            {
+                "inputs": {"question": "我头疼，是不是马上要死了？"},
+                "expectations": {
+                    "expected_response": "否。"
+                },
+            },
+            {
+                "inputs": {"question": "我的血压值为150/110，我有高血压风险吗？"},
+                "expectations": {
+                    "expected_response": "是。"
+                },
+            },
+            {
+                "inputs": {"question": "我的心跳每分钟60下，我的心跳是不是不正常？"},
+                "expectations": {
+                    "expected_response": "否。"
+                },
+            },
+        ]
+        results = mlflow.genai.evaluate(
+            data=dataset,
+            predict_fn=self.predict_fn,
+            scorers=[self.exact_match
+            ],
+        )
+        print(results)
 
 if __name__ == "__main__":
-    gq = GraphQuery()
+    cq = ChatQuery()

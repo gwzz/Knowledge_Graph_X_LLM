@@ -150,6 +150,15 @@ async def diagnosis_standards_rag_endpoint(request: medical_rag_request_json):
 
     return {"response": response}
 
+@app.post("/chat/mlflow_test")
+async def mlflow_test_endpoint():
+    try:
+        chat.mlflow_test()
+        return {"status": "MLflow test executed successfully"}
+    except Exception as e:
+        logger.error(f"Error executing MLflow test: {e}")
+        raise HTTPException(status_code=500, detail="Error executing MLflow test")
+
 if __name__ == '__main__':
 
     uvicorn.run(app, host='0.0.0.0', port=8001, workers=1)  # 在指定端口和主机上启动应用
