@@ -10,11 +10,10 @@ from llama_index.embeddings.openai import OpenAIEmbedding
 from llama_index.core import Document,VectorStoreIndex
 from llama_index.core.schema import MetadataMode
 from llama_index.core.storage import StorageContext
-
 from llama_index.vector_stores.postgres import PGVectorStore
 import qdrant_client
+import psycopg2
 from llama_index.vector_stores.qdrant import QdrantVectorStore
-
 from sqlalchemy.orm import Session
 import app.knowledge.knowledge_crud as crud
 import app.knowledge.knowledge_schemas as schemas
@@ -57,13 +56,14 @@ class ContentQuery:
             api_base=RERANK_API_BASE,
             api_key='EMPTY')
 
-        self.vector_store = PGVectorStore.from_params(
+        self.pg_vector_store = PGVectorStore.from_params(
             database='hospital_standards',
             host=POSTGRES_HOST,
             password=POSTGRES_PASSWD,
             port=5432,
             user=POSTGRES_USER_NAME,
-            table_name="diagnosis_standards",
+            schema_name=POSTGRES_SCHEMA,
+            table_name=DIAGNOSIS_STANDARD_TABLE_NAME,
             embed_dim=1024,
             hybrid_search=True,
             hnsw_kwargs={
@@ -79,13 +79,12 @@ class ContentQuery:
                 host="localhost",
                 port=6333
             ), 
-            collection_name="diagnosis_standards")
+            collection_name=DIAGNOSIS_STANDARD_TABLE_NAME
+        )
 
-        ##### below are test methods for dev #####
-        # self.build_up_document_vector_pgvector()
-        # self.build_up_document_vector_qdrant()
-        # self.embed_search("甲状腺", top_k=5)  # Test embedding search
-        # self.qdrant_embed_search("甲状腺", top_k=5)
+        # self.call_build_vector()
+        self.pg_vector_index = VectorStoreIndex.from_vector_store(embed_model=self.embed_model,vector_store = self.pg_vector_store)
+        self.qdrant_vector_index = VectorStoreIndex.from_vector_store(embed_model=self.embed_model,vector_store = self.qdrant_vector_store)
 
     # def call_build_vector(self):
     #     schedule.every().day.at("02:00").do(self.build_up_document_vector(vector_store_type="qdrant"))
@@ -94,6 +93,9 @@ class ContentQuery:
     #         time.sleep(1)
     def call_build_vector(self):
         self.build_up_document_vector('qdrant')
+        self.build_up_document_vector('pgvector')
+
+        
 
     def build_up_document_vector(self, vector_store_type: str, db:Session = next(get_db())):
         sql_result = crud.get_diagnosis_standards_for_vector(db)
@@ -101,35 +103,46 @@ class ContentQuery:
             raise ValueError("No diagnosis standards found in the database.")
         logger.info(f"Retrieved {len(sql_result)} diagnosis standards for embedding.")
         documents = [Document(text=describes, metadata={"disease_name":name, "type_ab":type_ab, "is_emergency":is_emergency, "urgency_level":urgency_level}, excluded_embed_metadata_keys=['disease_name','type_ab','is_emergency','urgency_level'])  for i, (name, describes,type_ab, is_emergency, urgency_level) in enumerate(sql_result)]
+        logger.info(f"Converted to {len(documents)} Document objects for embedding.")
         for doc in documents:
             doc_embedding = self.embed_model.get_text_embedding(doc.get_content(metadata_mode=MetadataMode.EMBED))
             doc.embedding = doc_embedding
+        logger.info("Document embeddings generated.")
         if vector_store_type == "pgvector":
-            self.vector_store.add(documents, overwrite=True) 
+            connection = psycopg2.connect(
+                dbname=POSTGRES_DATABASE,
+                user=POSTGRES_USER_NAME,
+                password=POSTGRES_PASSWD,
+                host=POSTGRES_HOST,
+                port="5432",
+                options=f"-c search_path={POSTGRES_SCHEMA}"
+            )
+            connection.autocommit = True
+            table_name = DIAGNOSIS_STANDARD_TABLE_NAME
+            with connection.cursor() as c:
+                c.execute(f"DROP TABLE IF EXISTS data_{table_name}")
+            self.pg_vector_store.add(documents, overwrite=True) 
+            self.pg_vecotr_index = VectorStoreIndex.from_vector_store(embed_model=self.embed_model,vector_store = self.pg_vector_store)
         elif vector_store_type == "qdrant":
+            qd_client = qdrant_client.QdrantClient(
+                host="localhost",
+                port=6333
+            )
+            qd_client.recreate_collection(  
+                collection_name=DIAGNOSIS_STANDARD_TABLE_NAME,
+                vectors_config={"size": 1024, "distance": "Cosine"}
+            )
             self.qdrant_vector_store.add(documents, overwrite=True)
+            self.qdrant_vector_index = VectorStoreIndex.from_vector_store(embed_model=self.embed_model,vector_store = self.qdrant_vector_store)
         logger.info("Document vectors have been built and stored in the vector store.")
 
-
-    # def build_up_document_vector_qdrant(self, db:Session = next(get_db())):
-    #     sql_result = crud.get_diagnosis_standards_for_vector(db)
-    #     if not sql_result:
-    #         raise ValueError("No diagnosis standards found in the database.")
-    #     logger.info(f"Retrieved {len(sql_result)} diagnosis standards for embedding.")
-    #     documents = [Document(text=describes, metadata={"disease_name":name, "type_ab":type_ab, "is_emergency":is_emergency, "urgency_level":urgency_level}, excluded_embed_metadata_keys=['disease_name','type_ab','is_emergency','urgency_level'])  for i, (name, describes,type_ab, is_emergency, urgency_level) in enumerate(sql_result)]
-    #     for doc in documents:
-    #         doc_embedding = self.embed_model.get_text_embedding(doc.get_content(metadata_mode=MetadataMode.EMBED))
-    #         doc.embedding = doc_embedding
-    #     self.qdrant_vector_store.add(documents, overwrite=True)
-    #     logger.info("Document vectors have been built and stored in the Qdrant vector store.")
 
 
     def embed_search(self, query: str, top_k: int = 5, search_type: str = "hybrid"):
         """
         Perform an embedding-based search on the documents.
         """
-        vector_index = VectorStoreIndex.from_vector_store(embed_model=self.embed_model,vector_store = self.vector_store)
-        retriever = vector_index.as_retriever(similarity_top_k=top_k, vector_store_query_mode=search_type)
+        retriever = self.pg_vector_index.as_retriever(similarity_top_k=top_k, vector_store_query_mode=search_type)
         response = retriever.retrieve(query)
         if response is None:
             raise ValueError("Embedding response is None")
@@ -140,8 +153,7 @@ class ContentQuery:
         """
         Perform an embedding-based search on the documents.
         """
-        vector_index = VectorStoreIndex.from_vector_store(embed_model=self.embed_model,vector_store = self.qdrant_vector_store)
-        retriever = vector_index.as_retriever(similarity_top_k=top_k)
+        retriever = self.qdrant_vector_index.as_retriever(similarity_top_k=top_k)
         response = retriever.retrieve(query)
         if response is None:
             raise ValueError("Embedding response is None")

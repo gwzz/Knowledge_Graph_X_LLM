@@ -87,7 +87,7 @@ async def delete_diagnosis_standard(diagnosis_id: int, db: Session = Depends(get
     return db_diagnosis
 
 @app.put("/knowledge/build_vector")
-async def build_vector_endpoint():
+def build_vector_endpoint():
     try:
         content.call_build_vector()
         return {"status": "Vector built successfully"}
