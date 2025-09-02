@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
 from . import knowledge_models as models
 from . import knowledge_schemas as schemas
+from databases import engine
+from sqlalchemy import inspect
 
 def get_diagnosis_standard(db: Session, diagnosis_id: int):
     return db.query(models.DiagnosisStandard).filter(models.DiagnosisStandard.id == diagnosis_id).first()
@@ -33,3 +35,15 @@ def delete_diagnosis_standard(db: Session, diagnosis_id: int):
         db.delete(db_diagnosis)
         db.commit()
     return db_diagnosis
+
+
+def get_database_tables(db: Session):
+    """Return a list of all table names in the connected database."""
+    inspector = inspect(engine)
+    tables = inspector.get_table_names()
+    print(models)
+    number = db.query(models.DiagnosisStandard).count()
+    print("#######################")
+    print(tables)
+    print(number)
+    return tables

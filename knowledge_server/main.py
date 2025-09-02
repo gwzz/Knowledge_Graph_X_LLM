@@ -86,6 +86,15 @@ async def delete_diagnosis_standard(diagnosis_id: int, db: Session = Depends(get
         raise HTTPException(status_code=404, detail="Diagnosis standard not found")
     return db_diagnosis
 
+@app.get("/knowledge/tables")
+async def get_database_tables_endpoint(db: Session = Depends(get_db)):
+    """
+    Get all table names in the connected database.
+    """
+    tables = crud.get_database_tables(db)
+    return {"tables": tables}
+
+
 @app.put("/knowledge/build_vector")
 def build_vector_endpoint():
     try:
