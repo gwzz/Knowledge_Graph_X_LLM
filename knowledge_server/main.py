@@ -11,6 +11,7 @@ from databases import engine, get_db
 from app.knowledge.knowledge import ContentQuery
 from app.medical.diagnosis_standards import MedicalQuery
 from pydantic import BaseModel
+from typing import Dict, Any, List, Optional
 from fastapi.middleware.cors import CORSMiddleware
 
 models.Base.metadata.create_all(bind=engine)  # 创建数据库表
@@ -29,6 +30,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 @app.get("/")
 async def read_root():
     return {"Hello": "World"}
@@ -92,8 +94,23 @@ async def get_database_tables_endpoint(db: Session = Depends(get_db)):
     Get all table names in the connected database.
     """
     tables = crud.get_database_tables(db)
-    return {"tables": tables}
+    return tables
 
+@app.get("/knowledge/get_table_schema/{table_name}")
+async def get_database_table_schema_endpoint(table_name: str ,db: Session = Depends(get_db)):
+    """
+    Get all table names in the connected database.
+    """
+    schema_info = crud.get_table_schema(table_name,db)
+    return schema_info
+
+@app.get("/knowledge/get_table_data/{table_name}")
+async def get_database_table_schema_endpoint(table_name: str, db: Session = Depends(get_db),page: int = 1,page_size: int = 50,filters: Optional[str] = None,sort: Optional[str] = None):
+    """
+    Get all table names in the connected database.
+    """
+    schema_info = crud.get_table_data(table_name,db)
+    return schema_info
 
 @app.put("/knowledge/build_vector")
 def build_vector_endpoint():
