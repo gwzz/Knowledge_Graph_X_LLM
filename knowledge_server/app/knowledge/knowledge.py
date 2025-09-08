@@ -36,8 +36,6 @@ class ContentQuery:
         self.llm = OpenAILike(
             model=MODEL_NAME,
             api_base=LLM_API_BASE,
-            # messages_to_prompt=messages_to_prompt,
-            # completion_to_prompt=completion_to_prompt,
             api_key='EMPTY',
             is_chat_model=True,
             temperature=0.6,

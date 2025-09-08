@@ -19,4 +19,4 @@ class DiagnosisStandard(DiagnosisStandardBase):
     id: int
 
     class Config:
-        orm_mode = True  # 允许从 ORM 对象转换
+        from_attributes = True  # 允许从 ORM 对象转换

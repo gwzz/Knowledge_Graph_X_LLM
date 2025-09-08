@@ -266,5 +266,3 @@ def get_total_count(session, query, table: Table) -> int:
     
     result = session.execute(count_query)
     return result.scalar()
-
-

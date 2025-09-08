@@ -144,7 +144,6 @@ async def embed_search_endpoint(request: Request):
     
     response = content.qdrant_embed_search(query, top_k=top_k)
     return {"response": response}
-
 @app.post("/knowledge/reranker_search")
 async def reranker_search_endpoint(request: Request):
     data = await request.json()

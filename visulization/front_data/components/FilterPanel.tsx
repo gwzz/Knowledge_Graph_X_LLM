@@ -111,9 +111,9 @@ export function FilterPanel({
           )}
         </div>
 
-        <div className="flex items-center space-x-2">
+        {/* <div className="flex items-center space-x-2">
           <Select onValueChange={(format) => onExport(format as 'csv' | 'json')}>
-            <SelectTrigger asChild>
+            <SelectTrigger>
               <Button variant="outline" size="sm">
                 <Download className="w-4 h-4 mr-2" />
                 Export
@@ -124,7 +124,7 @@ export function FilterPanel({
               <SelectItem value="json">JSON</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        </div> */}
       </div>
 
       {/* Filter Builder */}
@@ -267,45 +267,6 @@ export function FilterPanel({
           </CardContent>
         </Card>
       )}
-
-      {/* Tables List */}
-      {/* {!collapsed && (
-        <div className="flex-1 p-2">
-          {loading ? (
-            <div className="space-y-2">
-              {[...Array(8)].map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full rounded-md" />
-              ))}
-            </div>
-          ) : error ? (
-            <div className="text-center py-8 px-4">
-              <Database className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500 mb-2">Failed to load tables</p>
-              <Button variant="outline" size="sm" onClick={refetch}>
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Retry
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {filteredTables.map((table) => (
-                <TableListItem
-                  key={table.name}
-                  table={table}
-                  isSelected={selectedTable === table.name}
-                  onClick={() => onTableSelect(table.name)}
-                  formatRecordCount={formatRecordCount}
-                />
-              ))}
-              {filteredTables.length === 0 && searchQuery && (
-                <div className="text-center py-8">
-                  <p className="text-sm text-gray-500">No tables found matching "{searchQuery}"</p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )} */}
     </div>
   );
 }
